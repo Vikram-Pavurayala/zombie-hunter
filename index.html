@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>3D Zombie Hunter</title>
+    <style>
+        :root {
+            --bg-dark: rgba(0, 0, 0, 0.85);
+            --text-light: #e0e0e0;
+            --accent-green: #4CAF50;
+            --accent-dark-green: #45a049;
+        }
+        body { 
+            margin: 0; 
+            background-color: #00CED1;
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+            color: var(--text-light);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        canvas { 
+            display: block;
+            position: absolute;
+            width: 100vw;
+            height: 100vh;
+            z-index: -1;
+        }
+        #uiContainer {
+            display: flex;
+            width: 90%;
+            max-width: 1200px;
+            height: 80%;
+            background: var(--bg-dark);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 15px 50px rgba(0,0,0,0.5);
+        }
+        #uiContainer.hidden {
+        	display: none;
+        }
+        #startScreen {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 40px;
+            background: rgba(0, 0, 0, 0.7);
+            text-align: center;
+        }
+        #gameRules {
+            flex: 1;
+            padding: 40px;
+            background: rgba(20, 20, 20, 0.9);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        input {
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 10px;
+            border: 2px solid #666;
+            width: 250px;
+            background: rgba(255, 255, 255, 0.9);
+            font-size: 18px;
+            transition: all 0.3s ease;
+        }
+        input:focus {
+            outline: none;
+            border-color: var(--accent-green);
+            box-shadow: 0 0 15px rgba(76, 175, 80, 0.5);
+        }
+        button {
+            padding: 15px 30px;
+            background: var(--accent-green);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 20px;
+            transition: all 0.3s ease;
+        }
+        button:hover {
+            background: var(--accent-dark-green);
+            transform: scale(1.05);
+        }
+        h1 {
+            margin: 0 0 30px 0;
+            font-size: 36px;
+            color: var(--accent-green);
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+        h3 {
+            margin: 0 0 20px 0;
+            font-size: 24px;
+            color: var(--text-light);
+        }
+        .rule-section {
+            margin-bottom: 20px;
+        }
+        .rule-title {
+            color: var(--accent-green);
+            font-size: 22px;
+            margin-bottom: 15px;
+            border-bottom: 2px solid var(--accent-green);
+            padding-bottom: 10px;
+        }
+        .rule-list {
+            list-style-type: none;
+            padding: 0;
+        }
+        .rule-list li {
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+        .key-highlight {
+            background-color: var(--accent-green);
+            color: white;
+            padding: 3px 8px;
+            border-radius: 5px;
+            margin-right: 10px;
+            font-weight: bold;
+            min-width: 25px;
+            display: inline-block;
+            text-align: center;
+        }
+        
+    </style>
+</head>
+<body>
+    <div id="uiContainer">
+        <div id="startScreen">
+            <h1>Zombie Hunter</h1>
+            <h3>Enter Your Survivor's Name</h3>
+            <input type="text" id="playerNameInput" maxlength="7" placeholder="Max 7 characters">
+            <br>
+            <button id="startButton" onclick="submitPlayerName()" >Survive the Zombie Horde!</button>
+        </div>
+        <div id="gameRules">
+            <div class="rule-section">
+                <h3 class="rule-title">Survival Controls</h3>
+                <ul class="rule-list">
+                    <li><span class="key-highlight">W</span> Move Forward</li>
+                    <li><span class="key-highlight">S</span> Move Backward</li>
+                    <li><span class="key-highlight">&larr;/&rarr;</span> Turn Camera</li>
+                    <li><span class="key-highlight">F</span> Shoot Zombies</li>
+                </ul>
+            </div>
+            <div class="rule-section">
+                <h3 class="rule-title">Survival Rules</h3>
+                <ul>
+                	<li>Kill <strong style="color: red">ALL ZOMBIES</strong> to win the game</li>
+                    <li><strong style="color: red">5 NEW ZOMBIES</strong> spawn every 15 seconds</li>
+                    <li>Collect <strong style="color: red">ALL 20 GEMS</strong> to stop zombie spawns</li>
+                    <li><strong style="color: red">ZOMBIE CONTACT = GAME OVER</strong></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+
+    <script type="module" src="main.js"></script>
+</body>
+</html>
