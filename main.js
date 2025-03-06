@@ -1788,7 +1788,7 @@ function updateJoystickPosition(clientX, clientY) {
     mobileUI.joystick.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
     
     // Normalize for direction input (between -1 and 1)
-    joystickState.moveX = dx / maxRadius;
+    joystickState.moveX = - dx / maxRadius;
     joystickState.moveY = -dy / maxRadius; // Negative because forward is -Z
 }
 
