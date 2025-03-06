@@ -426,7 +426,7 @@
             <h3>Enter Your Survivor's Name</h3>
             <input type="text" id="playerNameInput" maxlength="7" placeholder="Max 7 characters">
             <br>
-            <button id="startButton" onclick="submitPlayerName()">Survive the Horde!</button>
+            <button id="startButton" onclick="enterFullscreen(); submitPlayerName();">Survive the Horde!</button>
         </div>
         <div id="gameRules">
             <div class="rule-section">
@@ -488,6 +488,20 @@
                 this.classList.remove('visible');
             }
         });
+
+          // Fullscreen functionality
+        function enterFullscreen() {
+            const elem = document.documentElement; // Targets the entire HTML document
+            if (elem.requestFullscreen) {
+                elem.requestFullscreen();
+            } else if (elem.mozRequestFullScreen) { // Firefox
+                elem.mozRequestFullScreen();
+            } else if (elem.webkitRequestFullscreen) { // Chrome, Safari, Opera
+                elem.webkitRequestFullscreen();
+            } else if (elem.msRequestFullscreen) { // IE/Edge
+                elem.msRequestFullscreen();
+            }
+        }
     </script>
 </body>
 </html>
