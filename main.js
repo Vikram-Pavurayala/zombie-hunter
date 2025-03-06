@@ -1611,6 +1611,365 @@ function loadGame(name) {
 		    spawnZombies();
 		}
 	}, 15000);
+
+	// First, add detection for mobile devices and orientation
+const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+let isLandscape = window.innerWidth > window.innerHeight;
+
+// Create mobile UI elements
+function setupMobileControls() {
+    // Create container for mobile controls
+    const mobileControls = document.createElement('div');
+    mobileControls.id = 'mobile-controls';
+    mobileControls.style.position = 'fixed';
+    mobileControls.style.bottom = '0';
+    mobileControls.style.left = '0';
+    mobileControls.style.width = '100%';
+    mobileControls.style.height = '100%';
+    mobileControls.style.pointerEvents = 'none';
+    mobileControls.style.display = isMobile ? 'block' : 'none';
+    document.body.appendChild(mobileControls);
+
+    // Create virtual joystick for movement
+    const joystickContainer = document.createElement('div');
+    joystickContainer.id = 'joystick-container';
+    joystickContainer.style.position = 'absolute';
+    joystickContainer.style.bottom = '80px';
+    joystickContainer.style.left = '80px';
+    joystickContainer.style.width = '120px';
+    joystickContainer.style.height = '120px';
+    joystickContainer.style.borderRadius = '60px';
+    joystickContainer.style.backgroundColor = 'rgba(255, 255, 255, 0.2)';
+    joystickContainer.style.pointerEvents = 'auto';
+    mobileControls.appendChild(joystickContainer);
+
+    // Create joystick
+    const joystick = document.createElement('div');
+    joystick.id = 'joystick';
+    joystick.style.position = 'absolute';
+    joystick.style.top = '50%';
+    joystick.style.left = '50%';
+    joystick.style.width = '60px';
+    joystick.style.height = '60px';
+    joystick.style.borderRadius = '30px';
+    joystick.style.backgroundColor = 'rgba(255, 255, 255, 0.5)';
+    joystick.style.transform = 'translate(-50%, -50%)';
+    joystickContainer.appendChild(joystick);
+
+    // Create shoot button
+    const shootButton = document.createElement('div');
+    shootButton.id = 'shoot-button';
+    shootButton.style.position = 'absolute';
+    shootButton.style.bottom = '80px';
+    shootButton.style.right = '80px';
+    shootButton.style.width = '80px';
+    shootButton.style.height = '80px';
+    shootButton.style.borderRadius = '40px';
+    shootButton.style.backgroundColor = 'rgba(255, 0, 0, 0.5)';
+    shootButton.style.display = 'flex';
+    shootButton.style.justifyContent = 'center';
+    shootButton.style.alignItems = 'center';
+    shootButton.style.color = 'white';
+    shootButton.style.fontSize = '16px';
+    shootButton.style.fontWeight = 'bold';
+    shootButton.style.pointerEvents = 'auto';
+    shootButton.textContent = 'SHOOT';
+    mobileControls.appendChild(shootButton);
+
+    // Create crouch button
+    const crouchButton = document.createElement('div');
+    crouchButton.id = 'crouch-button';
+    crouchButton.style.position = 'absolute';
+    crouchButton.style.bottom = '80px';
+    crouchButton.style.right = '180px';
+    crouchButton.style.width = '80px';
+    crouchButton.style.height = '80px';
+    crouchButton.style.borderRadius = '40px';
+    crouchButton.style.backgroundColor = 'rgba(0, 128, 255, 0.5)';
+    crouchButton.style.display = 'flex';
+    crouchButton.style.justifyContent = 'center';
+    crouchButton.style.alignItems = 'center';
+    crouchButton.style.color = 'white';
+    crouchButton.style.fontSize = '16px';
+    crouchButton.style.fontWeight = 'bold';
+    crouchButton.style.pointerEvents = 'auto';
+    crouchButton.textContent = 'CROUCH';
+    mobileControls.appendChild(crouchButton);
+
+    // Create camera rotation area
+    const cameraControl = document.createElement('div');
+    cameraControl.id = 'camera-control';
+    cameraControl.style.position = 'absolute';
+    cameraControl.style.top = '0';
+    cameraControl.style.right = '0';
+    cameraControl.style.width = '50%';
+    cameraControl.style.height = '50%';
+    cameraControl.style.pointerEvents = 'auto';
+    mobileControls.appendChild(cameraControl);
+
+    // Create landscape mode warning
+    const landscapeWarning = document.createElement('div');
+    landscapeWarning.id = 'landscape-warning';
+    landscapeWarning.style.position = 'fixed';
+    landscapeWarning.style.top = '0';
+    landscapeWarning.style.left = '0';
+    landscapeWarning.style.width = '100%';
+    landscapeWarning.style.height = '100%';
+    landscapeWarning.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+    landscapeWarning.style.color = 'white';
+    landscapeWarning.style.display = 'flex';
+    landscapeWarning.style.justifyContent = 'center';
+    landscapeWarning.style.alignItems = 'center';
+    landscapeWarning.style.fontSize = '24px';
+    landscapeWarning.style.zIndex = '1000';
+    landscapeWarning.style.display = (isMobile && !isLandscape) ? 'flex' : 'none';
+    landscapeWarning.textContent = 'Please rotate your device to landscape mode';
+    document.body.appendChild(landscapeWarning);
+
+    return {
+        joystickContainer,
+        joystick,
+        shootButton,
+        crouchButton,
+        cameraControl,
+        landscapeWarning
+    };
+}
+
+// Initialize mobile controls
+const mobileUI = setupMobileControls();
+
+// Joystick state
+const joystickState = {
+    active: false,
+    startX: 0,
+    startY: 0,
+    moveX: 0,
+    moveY: 0,
+    outer: { x: 0, y: 0, width: 0, height: 0 }
+};
+
+// Camera touch state
+const cameraTouchState = {
+    active: false,
+    lastX: 0,
+    lastY: 0
+};
+
+// Update joystick position and movement values
+function updateJoystickPosition(clientX, clientY) {
+    const rect = mobileUI.joystickContainer.getBoundingClientRect();
+    joystickState.outer = {
+        x: rect.left,
+        y: rect.top,
+        width: rect.width,
+        height: rect.height
+    };
+    
+    // Calculate center of joystick container
+    const centerX = joystickState.outer.x + joystickState.outer.width / 2;
+    const centerY = joystickState.outer.y + joystickState.outer.height / 2;
+    
+    // Calculate displacement from center
+    let dx = clientX - centerX;
+    let dy = clientY - centerY;
+    
+    // Calculate distance from center
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    
+    // Limit distance to joystick radius
+    const maxRadius = joystickState.outer.width / 2 - 30;
+    if (distance > maxRadius) {
+        dx = dx * maxRadius / distance;
+        dy = dy * maxRadius / distance;
+    }
+    
+    // Update joystick position
+    mobileUI.joystick.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
+    
+    // Normalize for direction input (between -1 and 1)
+    joystickState.moveX = dx / maxRadius;
+    joystickState.moveY = -dy / maxRadius; // Negative because forward is -Z
+}
+
+// Reset joystick position
+function resetJoystick() {
+    mobileUI.joystick.style.transform = 'translate(-50%, -50%)';
+    joystickState.moveX = 0;
+    joystickState.moveY = 0;
+}
+
+// Start joystick touch
+mobileUI.joystickContainer.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    const touch = e.touches[0];
+    joystickState.active = true;
+    updateJoystickPosition(touch.clientX, touch.clientY);
+});
+
+// Move joystick
+document.addEventListener('touchmove', (e) => {
+    if (joystickState.active) {
+        e.preventDefault();
+        const touch = Array.from(e.touches).find(t => {
+            const rect = mobileUI.joystickContainer.getBoundingClientRect();
+            const touchStartedNearJoystick = 
+                Math.abs(t.clientX - (rect.left + rect.width/2)) < rect.width &&
+                Math.abs(t.clientY - (rect.top + rect.height/2)) < rect.height;
+            return touchStartedNearJoystick;
+        });
+        
+        if (touch) {
+            updateJoystickPosition(touch.clientX, touch.clientY);
+        }
+    }
+
+    // Handle camera control touch
+    if (cameraTouchState.active) {
+        const touch = Array.from(e.touches).find(t => {
+            const rect = mobileUI.cameraControl.getBoundingClientRect();
+            return t.clientX > rect.left && t.clientX < rect.right && 
+                   t.clientY > rect.top && t.clientY < rect.bottom;
+        });
+        
+        if (touch) {
+            const dx = touch.clientX - cameraTouchState.lastX;
+            cameraTouchState.lastX = touch.clientX;
+            
+            // Adjust camera rotation based on touch movement
+            cameraState.rotationX -= dx * 0.01;
+        }
+    }
+}, { passive: false });
+
+// End joystick touch
+document.addEventListener('touchend', (e) => {
+    // If no touches left on joystick container, reset joystick
+    if (e.touches.length === 0 || Array.from(e.touches).every(t => {
+        const rect = mobileUI.joystickContainer.getBoundingClientRect();
+        return !(t.clientX > rect.left && t.clientX < rect.right && 
+                t.clientY > rect.top && t.clientY < rect.bottom);
+    })) {
+        joystickState.active = false;
+        resetJoystick();
+    }
+    
+    // Reset camera touch if no touches on camera control
+    if (e.touches.length === 0 || Array.from(e.touches).every(t => {
+        const rect = mobileUI.cameraControl.getBoundingClientRect();
+        return !(t.clientX > rect.left && t.clientX < rect.right && 
+                t.clientY > rect.top && t.clientY < rect.bottom);
+    })) {
+        cameraTouchState.active = false;
+    }
+});
+
+// Shoot button
+mobileUI.shootButton.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    keys["f"] = true;
+    shoot();
+});
+
+mobileUI.shootButton.addEventListener('touchend', (e) => {
+    e.preventDefault();
+    keys["f"] = false;
+    leftArm.rotation.x = 0;
+});
+
+// Crouch button
+mobileUI.crouchButton.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    keys["c"] = true;
+    characterState.isCrouching = true;
+    moveSpeed = 0.3;
+});
+
+mobileUI.crouchButton.addEventListener('touchend', (e) => {
+    e.preventDefault();
+    keys["c"] = false;
+    characterState.isCrouching = false;
+    moveSpeed = 0.4;
+});
+
+// Camera control
+mobileUI.cameraControl.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    const touch = e.touches[0];
+    cameraTouchState.active = true;
+    cameraTouchState.lastX = touch.clientX;
+    cameraTouchState.lastY = touch.clientY;
+});
+
+
+// Handle window resize
+    window.addEventListener("resize", () => {
+	    isLandscape = window.innerWidth > window.innerHeight;
+	    if (mobileUI.landscapeWarning) {
+	        mobileUI.landscapeWarning.style.display = (isMobile && !isLandscape) ? 'flex' : 'none';
+	    }
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+// Modify the existing update functions to work with touch controls
+function updateCharacter() {
+    const cameraDirection = new THREE.Vector3();
+    camera.getWorldDirection(cameraDirection);
+    cameraDirection.y = 0;
+    cameraDirection.normalize();
+
+    const right = new THREE.Vector3();
+    right.crossVectors(camera.up, cameraDirection).normalize();
+
+    characterState.direction.set(0, 0, 0);
+
+    if (!characterState.isWaving) {
+        // Handle keyboard controls
+        if (keys["w"]) characterState.direction.add(cameraDirection);
+        if (keys["s"]) characterState.direction.sub(cameraDirection);
+        
+        // Handle mobile joystick controls
+        if (isMobile && joystickState.active) {
+            if (joystickState.moveY !== 0) {
+                characterState.direction.add(cameraDirection.clone().multiplyScalar(joystickState.moveY));
+            }
+            if (joystickState.moveX !== 0) {
+                characterState.direction.add(right.clone().multiplyScalar(joystickState.moveX));
+            }
+        }
+
+        if (characterState.direction.length() > 0) {
+            characterState.direction.normalize();
+            const currentMoveSpeed = characterState.isCrouching
+                ? moveSpeed * 0.5
+                : moveSpeed;
+
+            // Calculate new position
+            const newPosition = new THREE.Vector3(
+                character.position.x +
+                    characterState.direction.x * currentMoveSpeed,
+                character.position.y,
+                character.position.z +
+                    characterState.direction.z * currentMoveSpeed,
+            );
+
+            // Only update position if no collision detected
+            if (checkCollisions(newPosition)) {
+                character.position.copy(newPosition);
+            }
+
+            character.rotation.y = Math.atan2(
+                characterState.direction.x,
+                characterState.direction.z,
+            );
+        }
+    }
+}
+
+
+
 	
     function animate(timestamp) {
         requestAnimationFrame(animate);
@@ -1642,12 +2001,7 @@ function loadGame(name) {
         renderer.render(scene, camera);
     }
 
-    // Handle window resize
-    window.addEventListener("resize", () => {
-        camera.aspect = window.innerWidth / window.innerHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(window.innerWidth, window.innerHeight);
-    });
+    
 
     // Start animation
     animate();
