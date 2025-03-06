@@ -612,7 +612,7 @@ function loadGame(name) {
     	} */
     	
         // Walking animation (only if not crouching)
-        if (keys["w"] || keys["s"]) {
+        if (keys["w"] || keys["s"] ) {
             characterState.animationTime += 0.1;
 
             const swingAngle = Math.sin(characterState.animationTime) * 1;
@@ -620,50 +620,72 @@ function loadGame(name) {
             leftLeg.rotation.x = swingAngle * 0.5;
             rightLeg.rotation.x = -swingAngle * 0.5;
         }
+
+	 if (isMobile && joystickState.active) {
+            if (joystickState.moveY !== 0 && joystickState.moveX !== 0) {
+		characterState.animationTime += 0.1;
+	
+	            const swingAngle = Math.sin(characterState.animationTime) * 1;
+	            rightArm.rotation.x = swingAngle;
+	            leftLeg.rotation.x = swingAngle * 0.5;
+	            rightLeg.rotation.x = -swingAngle * 0.5;
+	    }
+        }
     }
     // Update character movement speed when crouching
     function updateCharacter() {
-        const cameraDirection = new THREE.Vector3();
-        camera.getWorldDirection(cameraDirection);
-        cameraDirection.y = 0;
-        cameraDirection.normalize();
+    const cameraDirection = new THREE.Vector3();
+    camera.getWorldDirection(cameraDirection);
+    cameraDirection.y = 0;
+    cameraDirection.normalize();
 
-        const right = new THREE.Vector3();
-        right.crossVectors(camera.up, cameraDirection).normalize();
+    const right = new THREE.Vector3();
+    right.crossVectors(camera.up, cameraDirection).normalize();
 
-        characterState.direction.set(0, 0, 0);
+    characterState.direction.set(0, 0, 0);
 
-        if (!characterState.isWaving) {
-            if (keys["w"]) characterState.direction.add(cameraDirection);
-            if (keys["s"]) characterState.direction.sub(cameraDirection);
-
-            if (characterState.direction.length() > 0) {
-                characterState.direction.normalize();
-                const currentMoveSpeed = characterState.isCrouching
-                    ? moveSpeed * 0.5
-                    : moveSpeed;
-
-                // Calculate new position
-                const newPosition = new THREE.Vector3(
-                    character.position.x +
-                        characterState.direction.x * currentMoveSpeed,
-                    character.position.y,
-                    character.position.z +
-                        characterState.direction.z * currentMoveSpeed,
-                );
-
-                // Only update position if no collision detected
-                if (checkCollisions(newPosition)) {
-                    character.position.copy(newPosition);
-                }
-
-                character.rotation.y = Math.atan2(
-                    characterState.direction.x,
-                    characterState.direction.z,
-                );
+    if (!characterState.isWaving) {
+        // Handle keyboard controls
+        if (keys["w"]) characterState.direction.add(cameraDirection);
+        if (keys["s"]) characterState.direction.sub(cameraDirection);
+        
+        // Handle mobile joystick controls
+        if (isMobile && joystickState.active) {
+            if (joystickState.moveY !== 0) {
+                characterState.direction.add(cameraDirection.clone().multiplyScalar(joystickState.moveY));
+            }
+            if (joystickState.moveX !== 0) {
+                characterState.direction.add(right.clone().multiplyScalar(joystickState.moveX));
             }
         }
+
+        if (characterState.direction.length() > 0) {
+            characterState.direction.normalize();
+            const currentMoveSpeed = characterState.isCrouching
+                ? moveSpeed * 0.5
+                : moveSpeed;
+
+            // Calculate new position
+            const newPosition = new THREE.Vector3(
+                character.position.x +
+                    characterState.direction.x * currentMoveSpeed,
+                character.position.y,
+                character.position.z +
+                    characterState.direction.z * currentMoveSpeed,
+            );
+
+            // Only update position if no collision detected
+            if (checkCollisions(newPosition)) {
+                character.position.copy(newPosition);
+            }
+
+            character.rotation.y = Math.atan2(
+                characterState.direction.x,
+                characterState.direction.z,
+            );
+        }
     }
+}
 
     function updateCamera() {
         if (keys["ArrowRight"])
@@ -1914,59 +1936,7 @@ mobileUI.cameraControl.addEventListener('touchstart', (e) => {
     });
 
 // Modify the existing update functions to work with touch controls
-function updateCharacter() {
-    const cameraDirection = new THREE.Vector3();
-    camera.getWorldDirection(cameraDirection);
-    cameraDirection.y = 0;
-    cameraDirection.normalize();
 
-    const right = new THREE.Vector3();
-    right.crossVectors(camera.up, cameraDirection).normalize();
-
-    characterState.direction.set(0, 0, 0);
-
-    if (!characterState.isWaving) {
-        // Handle keyboard controls
-        if (keys["w"]) characterState.direction.add(cameraDirection);
-        if (keys["s"]) characterState.direction.sub(cameraDirection);
-        
-        // Handle mobile joystick controls
-        if (isMobile && joystickState.active) {
-            if (joystickState.moveY !== 0) {
-                characterState.direction.add(cameraDirection.clone().multiplyScalar(joystickState.moveY));
-            }
-            if (joystickState.moveX !== 0) {
-                characterState.direction.add(right.clone().multiplyScalar(joystickState.moveX));
-            }
-        }
-
-        if (characterState.direction.length() > 0) {
-            characterState.direction.normalize();
-            const currentMoveSpeed = characterState.isCrouching
-                ? moveSpeed * 0.5
-                : moveSpeed;
-
-            // Calculate new position
-            const newPosition = new THREE.Vector3(
-                character.position.x +
-                    characterState.direction.x * currentMoveSpeed,
-                character.position.y,
-                character.position.z +
-                    characterState.direction.z * currentMoveSpeed,
-            );
-
-            // Only update position if no collision detected
-            if (checkCollisions(newPosition)) {
-                character.position.copy(newPosition);
-            }
-
-            character.rotation.y = Math.atan2(
-                characterState.direction.x,
-                characterState.direction.z,
-            );
-        }
-    }
-}
 
 
 
